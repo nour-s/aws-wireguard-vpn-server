@@ -6,7 +6,7 @@ name: Create Wireguard Platform on AWS
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches: [master]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -24,10 +24,10 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      
+
       # Runs a single command using the runners shell
       - name: Setup the linux environment
-        
+
         run: |
           sudo apt update
           sudo apt install -y gnupg software-properties-common curl
@@ -42,6 +42,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_REGION: ap-southeast-1
         run: |
           echo "Running init -----------"
           ./scripts/init
