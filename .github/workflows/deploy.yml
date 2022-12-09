@@ -52,3 +52,5 @@ jobs:
           ./scripts/configure
           echo "Running client-config -----------"
           ./scripts/client-config
+          echo "Verifying configuratio -----------"
+          ./scripts/verify
