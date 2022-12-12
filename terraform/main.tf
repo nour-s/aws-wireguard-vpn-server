@@ -88,3 +88,38 @@ resource "aws_security_group" "wireguard" {
     Name : "wireguard"
   }
 }
+
+# Create the SES email identity
+resource "aws_ses_email_identity" "email_to_receive_keys" {
+  email = "var.email_address"
+}
+
+resource "aws_ses_identity_policy" "email_policy" {
+  identity = "aws_ses_email_identity.email_to_receive_keys.email"
+
+  policy =
+  {
+    "Version": "2008-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": "ses:SendEmail",
+        "Resource": "*"
+      }
+    ]
+  }
+}
+
+# Create a local-exec provisioner that sends an email using SES
+resource "null_resource" "send_email" {
+  provisioner "local-exec" {
+    command = <<EOF
+      # Use the AWS CLI to send an email using the verified SES email identity
+      aws ses send-email \
+        --from "${aws_ses_email_identity.email_to_receive_keys.email}" \
+        --to "${aws_ses_email_identity.email_to_receive_keys.email}" \
+        --subject "AWS Wireguard Keys" \
+        --text "Here are the keys to your wireguard"
+    EOF
+  }
+}

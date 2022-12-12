@@ -38,6 +38,7 @@ if [ ! -f $tf_vars ]; then
   cat ./terraform/terraform.tfvars.example \
     | sed "s/PUT_ACCESS_KEY/$(echo $AWS_ACCESS_KEY_ID | sed 's/\//\\\//g')/g" \
     | sed "s/PUT_SECRET_KEY/$(echo $AWS_SECRET_ACCESS_KEY | sed 's/\//\\\//g')/g" \
+    | sed "s/someone@somewhere.com/$(echo $EMAIL_ADDRESS | sed 's/\//\\\//g')/g" \
    > $tf_vars
    cat $tf_vars
 else

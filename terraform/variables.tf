@@ -1,6 +1,8 @@
 // AWS Credentials
 variable "aws_access_key" {}
 variable "aws_secret_key" {}
+// The email that will be used as sender and receipient of an email with the wireguard configuration.
+variable "email_address" {}
 
 // AWS Region where we're deploying the gateway.
 variable "region" {
@@ -32,7 +34,7 @@ variable "gateway_instance_type" {
 // Gateway instance disk volume size.
 // We're not storing any data so any smaller volume size would work fine.
 variable "gateway_instance_disk_size" {
-  default = "12"
+  default = "1"
 }
 
 // Wireguard primary gateway CIDR.
