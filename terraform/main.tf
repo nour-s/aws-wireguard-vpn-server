@@ -89,40 +89,40 @@ resource "aws_security_group" "wireguard" {
   }
 }
 
-# Create the SES email identity
-resource "aws_ses_email_identity" "email_to_receive_keys" {
-  email = var.email_address
-}
+# # Create the SES email identity
+# resource "aws_ses_email_identity" "email_to_receive_keys" {
+#   email = var.email_address
+# }
 
-data "aws_iam_policy_document" "email_policy_doc" {
-  statement {
-    actions   = ["SES:SendEmail", "SES:SendRawEmail"]
-    resources = [aws_ses_email_identity.email_to_receive_keys.arn]
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-  }
-}
-
-
-resource "aws_ses_identity_policy" "email_policy" {
-  name     = "email_identity_policy"
-  identity = aws_ses_email_identity.email_to_receive_keys.email
-  policy   = data.aws_iam_policy_document.email_policy_doc.json
-}
+# data "aws_iam_policy_document" "email_policy_doc" {
+#   statement {
+#     actions   = ["SES:SendEmail", "SES:SendRawEmail"]
+#     resources = [aws_ses_email_identity.email_to_receive_keys.arn]
+#     principals {
+#       type        = "*"
+#       identifiers = ["*"]
+#     }
+#   }
+# }
 
 
-# Create a local-exec provisioner that sends an email using SES
-resource "null_resource" "send_email" {
-  provisioner "local-exec" {
-    command = <<EOF
-      # Use the AWS CLI to send an email using the verified SES email identity
-      aws ses send-email \
-        --from "${aws_ses_email_identity.email_to_receive_keys.email}" \
-        --to "${aws_ses_email_identity.email_to_receive_keys.email}" \
-        --subject "AWS Wireguard Keys" \
-        --text "Here are the keys to your wireguard"
-    EOF
-  }
-}
+# resource "aws_ses_identity_policy" "email_policy" {
+#   name     = "email_identity_policy"
+#   identity = aws_ses_email_identity.email_to_receive_keys.email
+#   policy   = data.aws_iam_policy_document.email_policy_doc.json
+# }
+
+
+# # Create a local-exec provisioner that sends an email using SES
+# resource "null_resource" "send_email" {
+#   provisioner "local-exec" {
+#     command = <<EOF
+#       # Use the AWS CLI to send an email using the verified SES email identity
+#       aws ses send-email \
+#         --from "${aws_ses_email_identity.email_to_receive_keys.email}" \
+#         --to "${aws_ses_email_identity.email_to_receive_keys.email}" \
+#         --subject "AWS Wireguard Keys" \
+#         --text "Here are the keys to your wireguard"
+#     EOF
+#   }
+# }
