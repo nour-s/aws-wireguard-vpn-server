@@ -34,7 +34,7 @@ variable "gateway_instance_type" {
 // Gateway instance disk volume size.
 // We're not storing any data so any smaller volume size would work fine.
 variable "gateway_instance_disk_size" {
-  default = "1"
+  default = "8"
 }
 
 // Wireguard primary gateway CIDR.

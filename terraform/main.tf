@@ -91,24 +91,27 @@ resource "aws_security_group" "wireguard" {
 
 # Create the SES email identity
 resource "aws_ses_email_identity" "email_to_receive_keys" {
-  email = "var.email_address"
+  email = var.email_address
 }
 
-resource "aws_ses_identity_policy" "email_policy" {
-  identity = "aws_ses_email_identity.email_to_receive_keys.email"
-
-  policy =
-  {
-    "Version": "2008-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Action": "ses:SendEmail",
-        "Resource": "*"
-      }
-    ]
+data "aws_iam_policy_document" "email_policy_doc" {
+  statement {
+    actions   = ["SES:SendEmail", "SES:SendRawEmail"]
+    resources = [aws_ses_email_identity.email_to_receive_keys.arn]
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
   }
 }
+
+
+resource "aws_ses_identity_policy" "email_policy" {
+  name     = "email_identity_policy"
+  identity = aws_ses_email_identity.email_to_receive_keys.email
+  policy   = data.aws_iam_policy_document.email_policy_doc.json
+}
+
 
 # Create a local-exec provisioner that sends an email using SES
 resource "null_resource" "send_email" {
