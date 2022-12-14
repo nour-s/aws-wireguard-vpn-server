@@ -51,7 +51,5 @@ jobs:
           ./scripts/provision
           echo "Running configure -----------"
           ./scripts/configure
-          echo "Running client-config -----------"
-          ./scripts/client-config
-          # echo "Verifying configuratio -----------"
-          # ./scripts/verify
+          echo "Running sending email"
+          ./scripts/send-email
