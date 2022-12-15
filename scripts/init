@@ -10,7 +10,7 @@ wg_client_key="./ansible/keys/wireguard_client"
 
 if [ ! -f $ssh_key ]; then
   echo "Generating a new SSH key: $ssh_key"
-  ssh-keygen -o -t rsa -b 4096 -f $ssh_key -N "" -C "wireguard-gateway"
+  ssh-keygen -o -t rsa -b 4096 -f $ssh_key -N "" -C "wireguard-gateway" > /dev/null
 else
   echo "SSH key already exists, skipping"
 fi

@@ -4,8 +4,11 @@ set -e
 
 pushd terraform
 
+echo "Running terrafor apply"
 terraform init -input=false -backend-config="access_key=${AWS_ACCESS_KEY_ID}" -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}" -reconfigure
 terraform fmt
 terraform apply -input=false -auto-approve > /dev/null
+
+echo "Infrastructure is ready"
 
 popd
