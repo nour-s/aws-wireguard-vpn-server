@@ -18,5 +18,5 @@ pushd ./terraform
 terraform init -input=false
 terraform fmt
 terraform plan
-terraform destroy -input=false -auto-approve
+terraform destroy -input=false -auto-approve > /dev/null
 popd
