@@ -6,6 +6,6 @@ pushd terraform
 
 terraform init -input=false -backend-config="access_key=${AWS_ACCESS_KEY_ID}" -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}" -reconfigure
 terraform fmt
-terraform apply -input=false -auto-approve -no-color
+terraform apply -input=false -auto-approve 
 
 popd

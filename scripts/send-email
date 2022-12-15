@@ -34,6 +34,6 @@ done
 
 if [ $status == "Success" ]; then
     echo "Sending email"
-    ./scripts/client-config > client.con
+    ./scripts/client-config > client.conf
     aws ses send-email --from "$EMAIL_ADDRESS" --to "$EMAIL_ADDRESS" --subject "Your wireguard keys" --text "$(cat ./client.conf)"
 fi
