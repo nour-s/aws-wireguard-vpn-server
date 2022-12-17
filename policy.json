@@ -1,0 +1,150 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AssociateAddress",
+                "ec2:CreateTags",
+                "ec2:DeleteKeyPair",
+                "ec2:DescribeAddresses",
+                "ec2:DescribeImages",
+                "ec2:DescribeInstanceAttribute",
+                "ec2:DescribeInstanceCreditSpecifications",
+                "ec2:DescribeInstanceTypes",
+                "ec2:DescribeInstances",
+                "ec2:DescribeInternetGateways",
+                "ec2:DescribeKeyPairs",
+                "ec2:DescribeNetworkAcls",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeRouteTables",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeTags",
+                "ec2:DescribeVolumes",
+                "ec2:DescribeVpcClassicLink",
+                "ec2:DescribeVpcClassicLinkDnsSupport",
+                "ec2:DescribeVpcs",
+                "ec2:DisassociateAddress",
+                "ec2:DisassociateRouteTable",
+                "ec2:ReleaseAddress",
+                "sts:GetCallerIdentity"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:AllocateAddress",
+            "Resource": "arn:aws:ec2:ap-southeast-1:303279984743:elastic-ip/${AllocationId}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:ModifyInstanceAttribute",
+                "ec2:RunInstances",
+                "ec2:TerminateInstances"
+            ],
+            "Resource": "arn:aws:ec2:ap-southeast-1:303279984743:instance/${InstanceId}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AttachInternetGateway",
+                "ec2:CreateInternetGateway",
+                "ec2:DeleteInternetGateway",
+                "ec2:DetachInternetGateway"
+            ],
+            "Resource": "arn:aws:ec2:ap-southeast-1:303279984743:internet-gateway/${InternetGatewayId}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:ImportKeyPair",
+            "Resource": "arn:aws:ec2:ap-southeast-1:303279984743:key-pair/${KeyPairName}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:RunInstances",
+            "Resource": "arn:aws:ec2:ap-southeast-1:303279984743:network-interface/${NetworkInterfaceId}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AssociateRouteTable",
+                "ec2:CreateRoute",
+                "ec2:CreateRouteTable",
+                "ec2:DeleteRoute",
+                "ec2:DeleteRouteTable"
+            ],
+            "Resource": "arn:aws:ec2:ap-southeast-1:303279984743:route-table/${RouteTableId}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:AuthorizeSecurityGroupIngress"
+            ],
+            "Resource": "arn:aws:ec2:ap-southeast-1:303279984743:security-group-rule/${SecurityGroupRuleId}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:CreateSecurityGroup",
+                "ec2:DeleteSecurityGroup",
+                "ec2:RevokeSecurityGroupEgress",
+                "ec2:RunInstances"
+            ],
+            "Resource": "arn:aws:ec2:ap-southeast-1:303279984743:security-group/${SecurityGroupId}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateSubnet",
+                "ec2:DeleteSubnet",
+                "ec2:ModifySubnetAttribute",
+                "ec2:RunInstances"
+            ],
+            "Resource": "arn:aws:ec2:ap-southeast-1:303279984743:subnet/${SubnetId}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:RunInstances",
+            "Resource": "arn:aws:ec2:ap-southeast-1:303279984743:volume/${VolumeId}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AttachInternetGateway",
+                "ec2:CreateRouteTable",
+                "ec2:CreateSubnet",
+                "ec2:CreateVpc",
+                "ec2:DeleteVpc",
+                "ec2:DescribeVpcAttribute",
+                "ec2:DetachInternetGateway",
+                "ec2:ModifyVpcAttribute"
+            ],
+            "Resource": "arn:aws:ec2:ap-southeast-1:303279984743:vpc/${VpcId}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:RunInstances",
+            "Resource": "arn:aws:ec2:ap-southeast-1::image/${ImageId}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "sts:*",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+        }
+    ]
+}
