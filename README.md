@@ -1,23 +1,23 @@
 # On-Demand Wireguard VPN Server
-
 This repository allows you to create a VPN server on demand (powered by Wireguard) on any AWS account and destroy it on demand by a simple click (or a few clicks, maybe even a few keyboard buttons for copy / paste, you get it.)
 
 ## Motivation
-*First:* it is fun :), if you don't think so, you are not a developer.
+*First:* It is fun, if you don't think so, you are not a developer :)
 
-*First:* Everyone needs a VPN connection these days, whether, for blocked VoIP calls, untrusted websites, blocked websites in your country, you name it.
+*Second:* Everyone needs a VPN connection these days, whether, for blocked VoIP calls, untrusted websites, blocked websites in your country, you name it.
 
 However, if you like me, you don't like the commitment of monthly payments to a commercial VPN that claims they never sell your data (or at least they try to), sharing the same network with others, or at best won't use for more than few hours a month, then this is for you.
 
-I'm trying to make this a non-technical user-friendly approach, but for now, you still need some basic knowledge (well, if you know how to follow instructions)
+## Work in Progress
+While it is functional, I'm still trying to make this a non-technical user-friendly, but for now, you still need some basic knowledge.
 
-Key features:
+### Key features::
 
 - **Powered by Wireguard**: You can check the official [website](https://www.wireguard.com/) for all the great features such as cryptography that doesn't rely on username/passwords for connection, speed, and so on.
 - **Pay as you go**: You only pay for the time the infrastructure is up. Once you destroy the infrastructure, you won't pay anything.
 - **Completely dedicated to you**: The server is built solely for you, you are sharing neither the network nor the computing power with anyone.
 
-## Requirements
+### Requirements
 
 - AWS Account with a credit card for payments
 - Wireguard client
@@ -47,13 +47,13 @@ The credentials should have a policy attached to them (find policy.json file), I
 
 You need to fork this repo under your GitHub Account, put the above secrets in the GitHub Actions secrets, and you will be ready to go.
 
-### Creation
+## Creating the server
 
 Go to the Actions tab, find the `Create Wireguard Platform on AWS` workflow, and click Run workflow. It might require approval by clicking Approve by the owner of the GitHub repo (you in this case).
 
 You can check the output of the workflow and look for 
 `You should have received an email from AWS asking you to verify your email address so we can send you an email with the keys ...` 
-the message, this means you have to check your inbox to find the AWS subscription approval.
+message, this means you have to check your inbox to find the AWS subscription approval.
 
 Once the workflow finishes, you will receive an email with the client configuration that can be used to connect to the server.
 
@@ -61,14 +61,12 @@ Open the Wireguard client (installation instructions [here](https://www.wireguar
 
 To activate the connection, just click Activate. Enjoy.
 
-### Destruction
+## Destroying the resources
 To destroy the resources, go to the Actions tab, find the Destroy job, and run it.
 That's it. You are done.
 
-
-
 ## Known issues
-- If you fail to approve the email subscription on time, the script will end without sending the Wireguard client credentials and you have to destroy the resources and start over.
+- If you fail to approve the email subscription on time, the workflow will end without sending the Wireguard client credentials and you have to destroy the resources and start over.
 - You shouldn't run the `Destroy` job while the `Create AWS` job is running, the results are unexpected and could result in billable astray resources.
 - S3 Bucket that is used by Terraform is not destroyed and accrues charges. However the charges are trivial for now, but I will consider removing it automatically as well later.
 
