@@ -1,10 +1,11 @@
 # On-Demand Wireguard VPN Server
 
-This repository allows you to create a VPN server on demand (powered by Wireguard) on any AWS account and destroy it on demand.
+This repository allows you to create a VPN server on demand (powered by Wireguard) on any AWS account and destroy it on demand by a simple click (or a few clicks, maybe even a few keyboard buttons for copy / paste, you get it.)
 
 ## Motivation
+*First:* it is fun :), if you don't think so, you are not a developer.
 
-Everyone needs a VPN connection these days, whether, for blocked VoIP calls, untrusted websites, blocked websites in your country, you name it.
+*First:* Everyone needs a VPN connection these days, whether, for blocked VoIP calls, untrusted websites, blocked websites in your country, you name it.
 
 However, if you like me, you don't like the commitment of monthly payments to a commercial VPN that claims they never sell your data (or at least they try to), sharing the same network with others, or at best won't use for more than few hours a month, then this is for you.
 
@@ -20,6 +21,16 @@ Key features:
 
 - AWS Account with a credit card for payments
 - Wireguard client
+
+## Cost
+I haven't been able to estimate the actual cost of running this but here are some of the resources costs from an actual bill:
+$0.0132 per On Demand Linux t3.micro Instance Hour
+$0.12 per GB-month of General Purpose SSD (gp2) provisioned storage - Asia Pacific (Singapore)
+
+Notice that some of the services are considered in the free-tier like data transfer and emails (200 a day) and so on. 
+If you already consumed your free tier you might be charged differently.
+
+
 
 ## Usage
 
@@ -61,11 +72,11 @@ That's it. You are done.
 - You shouldn't run the `Destroy` job while the `Create AWS` job is running, the results are unexpected and could result in billable astray resources.
 - S3 Bucket that is used by Terraform is not destroyed and accrues charges. However the charges are trivial for now, but I will consider removing it automatically as well later.
 
-
 ## Things to be done
 - I'm looking for a better way to share Wireguard credentials rather than sending them by email.
 - The Wireguard configuration client (credentials) need to be sent as an attachment rather than plain text.
 - Adding an automated way to download the client and set up the connection without user intervention.
+- The server runs in Singapore region which might not be suitable for everyone. Adding a way to specify the region would be great.
 
 ## Disclaimer
 This is a personal project that is not meant to be used professionally. It comes without any support, use it on your own.
