@@ -82,7 +82,6 @@ That's it. You are done.
 - If you fail to approve the email subscription on time, the workflow will end without sending the Wireguard client credentials and you have to destroy the resources and start over.
 - You shouldn't run the `Destroy` job while the `Create AWS` job is running, the results are unexpected and could result in billable astray resources.
 - Cancelling the workflow while it is building up the resources or destroying it could also have an unexpcted results, please wait till the workflow finishes before running another.
-- S3 Bucket that is used by Terraform is not destroyed and accrues charges. However the charges are trivial for now, but I will consider removing it automatically as well later.
 
 ## Things to be done
 - I'm looking for a better way to share Wireguard credentials rather than sending them by email.
