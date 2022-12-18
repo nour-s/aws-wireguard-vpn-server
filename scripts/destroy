@@ -21,6 +21,7 @@ terraform destroy -input=false -auto-approve > /dev/null
 
 
 echo "Deleting the S3 bucket"
+export AWS_REGION=ap-southeast-1
 aws s3 rm s3://wireguard-vpn --recursive
 aws s3 rb s3://wireguard-vpn
 popd
