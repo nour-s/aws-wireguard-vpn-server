@@ -6,8 +6,8 @@ tf_vars="./terraform/terraform.tfvars"
 if [ ! -f $tf_vars ]; then
   echo "Creating Terraform variables file: $tf_vars"
   cat ./terraform/terraform.tfvars.example \
-    | sed "s/PUT_ACCESS_KEY/$(echo $AWS_ACCESS_KEY | sed 's/\//\\\//g')/g" \
-    | sed "s/PUT_SECRET_KEY/$(echo $AWS_SECRET_KEY | sed 's/\//\\\//g')/g" \
+    | sed "s/PUT_ACCESS_KEY/$(echo $AWS_ACCESS_KEY_ID | sed 's/\//\\\//g')/g" \
+    | sed "s/PUT_SECRET_KEY/$(echo $AWS_SECRET_ACCESS_KEY | sed 's/\//\\\//g')/g" \
    > $tf_vars
    cat $tf_vars
 else
