@@ -17,11 +17,10 @@ fi
 pushd ./terraform
 terraform init -input=false
 terraform fmt
-terraform plan
 terraform destroy -input=false -auto-approve > /dev/null
 
 
 echo "Deleting the S3 bucket"
 aws s3 rm s3://wireguard-vpn --recursive
-aws s3 rb s3:// wireguard-vpn
+aws s3 rb s3://wireguard-vpn
 popd
