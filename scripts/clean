@@ -1,0 +1,8 @@
+rm -rf ./terraform/.terraform
+rm ./terraform/terraform.tfvars
+rm ./terraform/*.tfstate*
+rm ./terraform/.terraform*
+rm ./ansible/keys/*
+rm ./ansible/hosts
+rm ./ansible/vars.yml
+rm ./client.conf
