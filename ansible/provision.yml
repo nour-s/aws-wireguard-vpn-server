@@ -9,6 +9,6 @@
       tags: setup
 
   tasks:
-    - include: ./tasks/base.yml
-    - include: ./tasks/coredns.yml
-    - include: ./tasks/wireguard.yml
+    - include_tasks: ./tasks/base.yml
+    - include_tasks: ./tasks/coredns.yml
+    - include_tasks: ./tasks/wireguard.yml
