@@ -4,18 +4,23 @@ set -e
 
 pushd terraform
 
+# variable for bucket name
+bucket_name="wireguard-bucket"
 
-if ! aws s3 ls s3://wireguard > /dev/null 2>&1; then
+if ! aws s3 ls s3://$bucket_name > /dev/null 2>&1; then
     echo "Creating S3 bucket for terraform"
-    aws s3 mb s3://wireguard
-    aws s3api put-object --bucket wireguard --key terraform
+    aws s3 mb s3://$bucket_name
+    aws s3api put-object --bucket $bucket_name --key terraform
 else
     echo "S3 bucket already exists, skipping creation"; 
 fi
 
 
 echo "Running terrafor apply"
-terraform init -input=false -backend-config="access_key=${AWS_ACCESS_KEY_ID}" -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}" -backend-config="region=${AWS_REGION}" -reconfigure 
+terraform init -input=false \
+    -backend-config="access_key=${AWS_ACCESS_KEY_ID}" \
+    -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}" \
+    -backend-config="region=${AWS_REGION}" -reconfigure 
 terraform fmt
 terraform apply -input=false -auto-approve > /dev/null
 
