@@ -4,7 +4,6 @@ name: Destroy the AWS environment
 
 # Controls when the workflow will run
 on:
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -19,13 +18,13 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      
+
       # Runs a single command using the runners shell
       - name: Running Terraform Destroy command
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ap-southeast-1
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           sudo apt update
           sudo apt install -y gnupg software-properties-common curl

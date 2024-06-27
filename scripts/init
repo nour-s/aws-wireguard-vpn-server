@@ -39,6 +39,7 @@ if [ ! -f $tf_vars ]; then
     | sed "s/E_ADDRESS/$(echo $EMAIL_ADDRESS | sed 's/\//\\\//g')/g" \
     | sed "s/PUT_ACCESS_KEY/$(echo $AWS_ACCESS_KEY_ID | sed 's/\//\\\//g')/g" \
     | sed "s/PUT_SECRET_KEY/$(echo $AWS_SECRET_ACCESS_KEY | sed 's/\//\\\//g')/g" \
+    | sed "s/PUT_REGION/$(echo $AWS_REGION | sed 's/\//\\\//g')/g" \
    > $tf_vars
 else
   echo "Terraform vars file already exists, skipping"

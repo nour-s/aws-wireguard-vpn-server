@@ -1,6 +1,6 @@
 aws_access_key        = "PUT_ACCESS_KEY"
 aws_secret_key        = "PUT_SECRET_KEY"
-region                = "ap-southeast-1"
+region                = "PUT_REGION"
 vpc_cidr              = "10.0.0.0/16"
 vpc_public_subnets    = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
 gateway_network       = "10.10.0.0/24"
