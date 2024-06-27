@@ -16,16 +16,16 @@ else
 fi
 
 pushd ./terraform
+bucket_name="wireguard-bucket"
+
 terraform init -input=false
 terraform fmt
 terraform destroy -input=false -auto-approve \
     -backend-config="region=${AWS_REGION}" \
     -backend-config="bucket=${bucket_name}"  > /dev/null
 
-
 echo "Deleting the S3 bucket"
-bucket_name="wireguard-bucket"
-export AWS_DEFAULT_REGION=ap-southeast-1
+export AWS_DEFAULT_REGION=$AWS_REGION
 aws s3 rm s3://$bucket_name --recursive
 aws s3 rb s3://$bucket_name
 popd
