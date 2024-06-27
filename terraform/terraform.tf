@@ -3,7 +3,7 @@ terraform {
   backend "s3" {
     bucket = "wireguard-vpn"
     key    = "terraform"
-    region = "ap-southeast-1"
+    region = var.region
   }
 
   required_providers {
