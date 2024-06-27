@@ -17,15 +17,18 @@ fi
 
 pushd ./terraform
 export S3_BUCKET_NAME="wireguard-bucket"
-echo 'terraform destroy -input=false -auto-approve \ -backend-config="region=${AWS_REGION}" \ -backend-config="bucket=${bucket_name}"  > /dev/null'
-terraform init -input=false
-terraform fmt
-terraform destroy -input=false -auto-approve \
+
+terraform init -input=false  \
+    -backend-config="access_key=${AWS_ACCESS_KEY_ID}" \
+    -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}" \
     -backend-config="region=${AWS_REGION}" \
-    -backend-config="bucket=${S3_BUCKET_NAME}"  > /dev/null
+    -backend-config="bucket=${S3_BUCKET_NAME}" -reconfigure 
+
+terraform fmt
+terraform destroy -input=false -auto-approve > /dev/null
 
 echo "Deleting the S3 bucket"
 export AWS_DEFAULT_REGION=$AWS_REGION
-aws s3 rm s3://$bucket_name --recursive
-aws s3 rb s3://$bucket_name
+aws s3 rm s3://$S3_BUCKET_NAME --recursive
+aws s3 rb s3://$S3_BUCKET_NAME
 popd
