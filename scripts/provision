@@ -5,10 +5,10 @@ set -e
 pushd terraform
 
 
-if ! aws s3 ls s3://wireguard-vpn > /dev/null 2>&1; then
+if ! aws s3 ls s3://wireguard > /dev/null 2>&1; then
     echo "Creating S3 bucket for terraform"
-    aws s3 mb s3://wireguard-vpn
-    aws s3api put-object --bucket wireguard-vpn --key terraform
+    aws s3 mb s3://wireguard
+    aws s3api put-object --bucket wireguard --key terraform
 else
     echo "S3 bucket already exists, skipping creation"; 
 fi
