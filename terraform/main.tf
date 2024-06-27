@@ -1,16 +1,23 @@
+provider "aws" {
+  region = var.region
+}
+
+data "aws_availability_zones" "available" {}
+
 module "vpc_main" {
   source = "terraform-aws-modules/vpc/aws"
 
   name                 = "wireguard"
   cidr                 = var.vpc_cidr
   public_subnets       = var.vpc_public_subnets
-  azs                  = ["ap-southeast-1a", "ap-southeast-1b", "ap-southeast-1c"]
+  azs                  = data.aws_availability_zones.available.names
   enable_dns_hostnames = true
 
   tags = {
-    Name : "wireguard"
+    Name = "wireguard"
   }
 }
+
 
 resource "aws_key_pair" "wireguard" {
   key_name   = "wireguard"
