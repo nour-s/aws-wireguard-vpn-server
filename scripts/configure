@@ -25,6 +25,21 @@ fi
 echo "Waiting for the EC2 instance to spin"
 aws ec2 wait instance-running --filters Name=ip-address,Values=${gateway_ip}
 
+# Loop until SSH is ready
+echo "Waiting for SSH to be ready"
+attempt=0
+max_attempts=50
+
+while ! ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ./keys/ssh ubuntu@${gateway_ip} 'exit' 2>/dev/null; do
+  attempt=$((attempt + 1))
+  if [ $attempt -ge $max_attempts ]; then
+    echo "SSH not ready after $max_attempts attempts, exiting."
+    exit 1
+  fi
+  echo "SSH not ready, retrying in 2 seconds... (Attempt $attempt/$max_attempts)"
+  sleep 2
+done
+
 pushd ansible
 ansible-playbook -i hosts $tags provision.yml
 popd
