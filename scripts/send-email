@@ -33,7 +33,22 @@ while true; do
 done
 
 if [ $status == "Success" ]; then
-    echo "Sending email"
     ./scripts/client-config > client.conf
-    aws ses send-email --from "$EMAIL_ADDRESS" --to "$EMAIL_ADDRESS" --subject "Your wireguard keys" --text "$(cat ./client.conf)"
+    {
+        set -e
+        
+        sudo apt install qrencode
+        echo "Sending email"
+        cat client.conf | qrencode -o client.png
+
+        # upload the image to s3 and make sure it is public
+        aws s3 cp client.png s3://$S3_BUCKET_NAME/client.png --acl public-read
+
+        # get the url of the image
+        IMAGE_URL=$(aws s3 presign s3://$S3_BUCKET_NAME/client.png)
+    } || {
+        echo "Failed to generate QR code or upload to S3"
+    }
+
+    aws ses send-email --from "$EMAIL_ADDRESS" --to "$EMAIL_ADDRESS" --subject "Your wireguard keys" --text "$(cat ./client.conf)\n\QR Code Image: $IMAGE_URL"
 fi
