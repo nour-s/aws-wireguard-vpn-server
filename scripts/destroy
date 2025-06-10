@@ -16,7 +16,7 @@ else
 fi
 
 pushd ./terraform
-export S3_BUCKET_NAME="wireguard-bucket"
+export S3_BUCKET_NAME="nour-s/wireguard-bucket"
 
 terraform init -input=false  \
     -backend-config="access_key=${AWS_ACCESS_KEY_ID}" \
