@@ -8,7 +8,7 @@ variable "bucket" {
 }
 // AWS Region where we're deploying the gateway.
 variable "region" {
-  default = "ap-southeast-1"
+  default = "ap-south-1"
 }
 
 // Primary CIDR for the gateway.
