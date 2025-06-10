@@ -33,7 +33,7 @@ while true; do
 done
 
 if [ $status == "Success" ]; then
-    export S3_BUCKET_NAME="nours_wireguard-bucket"
+    export S3_BUCKET_NAME="nours-wireguard-bucket"
     
     ./scripts/client-config > client.conf
     {

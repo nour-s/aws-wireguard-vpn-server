@@ -4,7 +4,7 @@ variable "aws_secret_key" {}
 // The email that will be used as sender and receipient of an email with the wireguard configuration.
 variable "email_address" {}
 variable "bucket" {
-  default = "nours_wireguard-bucket"
+  default = "nours-wireguard-bucket"
 }
 // AWS Region where we're deploying the gateway.
 variable "region" {
