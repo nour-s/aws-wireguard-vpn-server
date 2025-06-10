@@ -5,7 +5,7 @@ set -e
 pushd terraform
 
 # variable for bucket name
-bucket_name="nour-s/wireguard-bucket"
+bucket_name="nours_wireguard-bucket"
 
 if ! aws s3 ls s3://$bucket_name > /dev/null 2>&1; then
     echo "Creating S3 bucket for terraform"
