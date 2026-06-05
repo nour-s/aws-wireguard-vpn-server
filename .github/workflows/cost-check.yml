@@ -57,5 +57,44 @@ jobs:
           echo "Total estimate: \$$TOTAL USD"
 
           echo ""
+          echo "=== Data Transfer (CloudWatch) ==="
+          INSTANCE_ID=$(echo "$INSTANCE" | awk '{print $1}')
+          START_TIME=$(echo "$INSTANCE" | awk '{print $4}')
+
+          NET_OUT=$(aws cloudwatch get-metric-statistics \
+            --namespace AWS/EC2 \
+            --metric-name NetworkOut \
+            --dimensions Name=InstanceId,Value=$INSTANCE_ID \
+            --start-time "$START_TIME" \
+            --end-time "$(date -u +%Y-%m-%dT%H:%M:%S)" \
+            --period 86400 \
+            --statistics Sum \
+            --query 'Datapoints[].Sum' \
+            --output text 2>/dev/null)
+
+          NET_IN=$(aws cloudwatch get-metric-statistics \
+            --namespace AWS/EC2 \
+            --metric-name NetworkIn \
+            --dimensions Name=InstanceId,Value=$INSTANCE_ID \
+            --start-time "$START_TIME" \
+            --end-time "$(date -u +%Y-%m-%dT%H:%M:%S)" \
+            --period 86400 \
+            --statistics Sum \
+            --query 'Datapoints[].Sum' \
+            --output text 2>/dev/null)
+
+          if [ -n "$NET_OUT" ] && [ "$NET_OUT" != "None" ]; then
+            NET_OUT_GB=$(echo "scale=3; $NET_OUT / 1073741824" | bc)
+            NET_IN_GB=$(echo "scale=3; $NET_IN / 1073741824" | bc)
+            # ap-south-1 data out: $0.109/GB (first 100GB/month free under free tier)
+            TRAFFIC_COST=$(echo "scale=4; $NET_OUT_GB * 0.109" | bc)
+            echo "Network In  : ${NET_IN_GB} GB (free)"
+            echo "Network Out : ${NET_OUT_GB} GB"
+            echo "Traffic cost: \$$TRAFFIC_COST  (@ \$0.109/GB out)"
+          else
+            echo "CloudWatch permission not available — see WireGuard stats from router instead"
+          fi
+
+          echo ""
           echo "=== S3 Bucket ==="
           aws s3 ls s3://nours-wireguard-bucket --recursive --human-readable --summarize 2>/dev/null || echo "Bucket not found or empty"
