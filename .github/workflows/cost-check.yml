@@ -7,26 +7,55 @@ jobs:
   cost:
     runs-on: ubuntu-latest
     steps:
-      - name: Cost breakdown
+      - name: Cost estimate
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          START=$(date -d "$(date +%Y-%m-01)" +%Y-%m-%d)
-          END=$(date -d "tomorrow" +%Y-%m-%d)
-          echo "=== Cost this month ($START to $END) by service ==="
-          aws ce get-cost-and-usage \
-            --time-period Start=$START,End=$END \
-            --granularity MONTHLY \
-            --metrics UnblendedCost \
-            --group-by Type=DIMENSION,Key=SERVICE \
-            --output table
+          echo "=== EC2 Instances in $AWS_DEFAULT_REGION ==="
+          INSTANCE=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=wireguard" "Name=instance-state-name,Values=running,stopped,pending" \
+            --query 'Reservations[].Instances[].[InstanceId,InstanceType,State.Name,LaunchTime]' \
+            --output text)
+
+          echo "$INSTANCE"
+
+          if [ -z "$INSTANCE" ]; then
+            echo "No wireguard instances found."
+            exit 0
+          fi
+
+          LAUNCH_TIME=$(echo "$INSTANCE" | awk '{print $4}')
+          INSTANCE_TYPE=$(echo "$INSTANCE" | awk '{print $2}')
+
+          # Calculate hours running
+          LAUNCH_EPOCH=$(date -d "$LAUNCH_TIME" +%s)
+          NOW_EPOCH=$(date +%s)
+          HOURS=$(echo "scale=2; ($NOW_EPOCH - $LAUNCH_EPOCH) / 3600" | bc)
+
+          # ap-south-1 (Mumbai) pricing
+          # t3.micro: $0.0116/hr, t3.small: $0.0232/hr
+          if [ "$INSTANCE_TYPE" = "t3.micro" ]; then RATE="0.0116"; fi
+          if [ "$INSTANCE_TYPE" = "t3.small" ]; then RATE="0.0232"; fi
+          RATE=${RATE:-"0.0116"}
+
+          EC2_COST=$(echo "scale=4; $HOURS * $RATE" | bc)
+          # 8GB gp2 EBS: $0.10/GB/month = $0.000137/GB/hr
+          EBS_COST=$(echo "scale=4; $HOURS * 8 * 0.000137" | bc)
+          # Elastic IP (attached = free, only charged when unattached)
+          TOTAL=$(echo "scale=4; $EC2_COST + $EBS_COST" | bc)
 
           echo ""
-          echo "=== Daily breakdown ==="
-          aws ce get-cost-and-usage \
-            --time-period Start=$START,End=$END \
-            --granularity DAILY \
-            --metrics UnblendedCost \
-            --output table
+          echo "=== Cost Estimate ==="
+          echo "Instance type : $INSTANCE_TYPE"
+          echo "Launch time   : $LAUNCH_TIME"
+          echo "Hours running : $HOURS hrs"
+          echo "EC2 cost      : \$$EC2_COST  (@ \$$RATE/hr)"
+          echo "EBS cost      : \$$EBS_COST  (8GB gp2 @ \$0.10/GB-month)"
+          echo "----------------------------"
+          echo "Total estimate: \$$TOTAL USD"
+
+          echo ""
+          echo "=== S3 Bucket ==="
+          aws s3 ls s3://nours-wireguard-bucket --recursive --human-readable --summarize 2>/dev/null || echo "Bucket not found or empty"
