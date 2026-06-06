@@ -29,18 +29,20 @@ jobs:
           AWS_REGION: ap-southeast-1
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           SG_BUCKET: nours-wireguard-bucket-sg
+          WG_CLIENT_PRIVATE_KEY: ${{ secrets.WG_CLIENT_PRIVATE_KEY }}
+          WG_CLIENT_PUBLIC_KEY: ${{ secrets.WG_CLIENT_PUBLIC_KEY }}
         run: |
-          echo "=== Init (generates fresh keys) ==="
+          # Pre-populate client keys so init reuses them (router config stays the same)
+          mkdir -p ansible/keys
+          echo "$WG_CLIENT_PRIVATE_KEY" > ansible/keys/wireguard_client
+          echo "$WG_CLIENT_PUBLIC_KEY" > ansible/keys/wireguard_client.pub
+          chmod 600 ansible/keys/wireguard_client
+
+          echo "=== Init ==="
           ./scripts/init
 
-          echo "=== WireGuard Server Public Key (needed for router config) ==="
+          echo "=== WireGuard Server Public Key (needed to update router peer) ==="
           cat ansible/keys/wireguard.pub
-
-          echo "=== WireGuard Client Private Key (needed for router config) ==="
-          cat ansible/keys/wireguard_client
-
-          echo "=== SSH Public Key ==="
-          cat ansible/keys/ssh.pub
 
           echo "=== Provision Singapore ==="
           pushd terraform
