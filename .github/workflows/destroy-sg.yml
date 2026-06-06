@@ -1,0 +1,48 @@
+name: Destroy Singapore WireGuard
+
+on:
+  workflow_dispatch:
+
+jobs:
+  destroy-sg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Terraform
+        run: |
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+          sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+          sudo apt update && sudo apt install -y terraform
+
+      - name: Destroy Singapore
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-southeast-1
+          SG_BUCKET: nours-wireguard-bucket-sg
+        run: |
+          # Create dummy tfvars so Terraform doesn't complain about missing vars
+          cat > terraform/terraform.tfvars <<EOF
+          aws_access_key = "$AWS_ACCESS_KEY_ID"
+          aws_secret_key = "$AWS_SECRET_ACCESS_KEY"
+          region         = "ap-southeast-1"
+          email_address  = "dummy@dummy.com"
+          EOF
+
+          cd terraform
+          terraform init -input=false \
+            -backend-config="access_key=${AWS_ACCESS_KEY_ID}" \
+            -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}" \
+            -backend-config="region=ap-southeast-1" \
+            -backend-config="bucket=${SG_BUCKET}" -reconfigure
+
+          terraform destroy -input=false -auto-approve || true
+
+          echo "Cleaning up S3 bucket"
+          cd ..
+          aws s3 rm s3://$SG_BUCKET --recursive || true
+          aws s3 rb s3://$SG_BUCKET || true
+
+          echo "Cleaning up any leftover key pair"
+          aws ec2 delete-key-pair --key-name wireguard --region ap-southeast-1 || true
