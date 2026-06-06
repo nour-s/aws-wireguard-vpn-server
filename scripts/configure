@@ -30,7 +30,7 @@ echo "Waiting for SSH to be ready"
 attempt=0
 max_attempts=50
 
-while ! ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ./keys/ssh ubuntu@${gateway_ip} 'exit'; do
+while ! ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ./ansible/keys/ssh ubuntu@${gateway_ip} 'exit'; do
   attempt=$((attempt + 1))
   if [ $attempt -ge $max_attempts ]; then
     echo "SSH not ready after $max_attempts attempts, exiting."
