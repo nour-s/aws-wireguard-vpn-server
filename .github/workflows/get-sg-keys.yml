@@ -13,13 +13,14 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ap-southeast-1
         run: |
+          # Target the instance with the known Singapore EIP
           INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=wireguard" "Name=instance-state-name,Values=running" \
-            --query 'Reservations[].Instances[].[InstanceId]' \
+            --filters "Name=ip-address,Values=13.229.193.55" "Name=instance-state-name,Values=running" \
+            --query 'Reservations[0].Instances[0].InstanceId' \
             --output text)
           AZ=$(aws ec2 describe-instances \
             --instance-ids $INSTANCE_ID \
-            --query 'Reservations[].Instances[].Placement.AvailabilityZone' \
+            --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' \
             --output text)
           echo "Instance: $INSTANCE_ID in $AZ"
 
