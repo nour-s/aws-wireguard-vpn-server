@@ -57,5 +57,3 @@ jobs:
           ./scripts/provision
           echo "Running configure -----------"
           ./scripts/configure
-          echo "Running sending email"
-          ./scripts/send-email
