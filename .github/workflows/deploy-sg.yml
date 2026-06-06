@@ -50,7 +50,13 @@ jobs:
             -backend-config="region=ap-southeast-1" \
             -backend-config="bucket=${SG_BUCKET}" -reconfigure
           terraform fmt
-          terraform apply -input=false -auto-approve
+          # Skip SES (hangs in ap-southeast-1) — we configure the router directly
+          terraform apply -input=false -auto-approve \
+            -target=module.vpc_main \
+            -target=aws_key_pair.wireguard \
+            -target=aws_security_group.wireguard \
+            -target=aws_instance.wireguard \
+            -target=aws_eip.wireguard
 
           echo "=== Singapore public IP ==="
           SG_IP=$(terraform output -raw gateway_public_ip)
