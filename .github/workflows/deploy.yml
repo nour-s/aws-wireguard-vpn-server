@@ -40,9 +40,19 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          WG_CLIENT_PRIVATE_KEY: ${{ secrets.WG_CLIENT_PRIVATE_KEY }}
+          WG_CLIENT_PUBLIC_KEY: ${{ secrets.WG_CLIENT_PUBLIC_KEY }}
         run: |
+          mkdir -p ansible/keys
+          echo "$WG_CLIENT_PRIVATE_KEY" > ansible/keys/wireguard_client
+          echo "$WG_CLIENT_PUBLIC_KEY" > ansible/keys/wireguard_client.pub
+          chmod 600 ansible/keys/wireguard_client
+
           echo "Running init -----------"
           ./scripts/init
+
+          echo "=== WireGuard Server Public Key ==="
+          cat ansible/keys/wireguard.pub
           echo "Running provision -----------"
           ./scripts/provision
           echo "Running configure -----------"
