@@ -1,0 +1,61 @@
+name: Deploy Singapore WireGuard
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-sg:
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: |
+          sudo apt update
+          sudo apt install -y gnupg software-properties-common curl
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+          sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+          sudo apt update
+          sudo apt-get install --reinstall resolvconf
+          sudo apt install -y ansible terraform wireguard
+
+      - name: Deploy to Singapore
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ap-southeast-1
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          SG_BUCKET: nours-wireguard-bucket-sg
+        run: |
+          echo "=== Init (reuses existing keys) ==="
+          ./scripts/init
+
+          echo "=== Provision Singapore ==="
+          pushd terraform
+
+          if ! aws s3 ls s3://$SG_BUCKET > /dev/null 2>&1; then
+            echo "Creating Singapore S3 bucket"
+            aws s3 mb s3://$SG_BUCKET --region ap-southeast-1
+            aws s3api put-object --bucket $SG_BUCKET --key terraform
+          else
+            echo "Bucket already exists"
+          fi
+
+          terraform init -input=false \
+            -backend-config="access_key=${AWS_ACCESS_KEY_ID}" \
+            -backend-config="secret_key=${AWS_SECRET_ACCESS_KEY}" \
+            -backend-config="region=ap-southeast-1" \
+            -backend-config="bucket=${SG_BUCKET}" -reconfigure
+          terraform fmt
+          terraform apply -input=false -auto-approve
+
+          echo "=== Singapore public IP ==="
+          SG_IP=$(terraform output -raw gateway_public_ip)
+          echo "SINGAPORE_IP=$SG_IP"
+          popd
+
+          echo "=== Configure WireGuard on instance ==="
+          ./scripts/configure
