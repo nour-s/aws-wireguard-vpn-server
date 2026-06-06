@@ -30,8 +30,17 @@ jobs:
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           SG_BUCKET: nours-wireguard-bucket-sg
         run: |
-          echo "=== Init (reuses existing keys) ==="
+          echo "=== Init (generates fresh keys) ==="
           ./scripts/init
+
+          echo "=== WireGuard Server Public Key (needed for router config) ==="
+          cat ansible/keys/wireguard.pub
+
+          echo "=== WireGuard Client Private Key (needed for router config) ==="
+          cat ansible/keys/wireguard_client
+
+          echo "=== SSH Public Key ==="
+          cat ansible/keys/ssh.pub
 
           echo "=== Provision Singapore ==="
           pushd terraform
