@@ -1,0 +1,39 @@
+name: Get Singapore WireGuard Keys
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-keys:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Singapore WireGuard public key
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-southeast-1
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=wireguard" "Name=instance-state-name,Values=running" \
+            --query 'Reservations[].Instances[].[InstanceId]' \
+            --output text)
+          AZ=$(aws ec2 describe-instances \
+            --instance-ids $INSTANCE_ID \
+            --query 'Reservations[].Instances[].Placement.AvailabilityZone' \
+            --output text)
+          echo "Instance: $INSTANCE_ID in $AZ"
+
+          # Generate a temp SSH key
+          ssh-keygen -t ed25519 -f /tmp/temp_key -N "" -q
+
+          # Push it via EC2 Instance Connect (valid for 60 seconds)
+          aws ec2-instance-connect send-ssh-public-key \
+            --instance-id $INSTANCE_ID \
+            --availability-zone $AZ \
+            --instance-os-user ubuntu \
+            --ssh-public-key file:///tmp/temp_key.pub
+
+          # SSH in and read WireGuard config
+          sleep 2
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i /tmp/temp_key ubuntu@13.229.193.55 \
+            "sudo wg show wg0 && echo '---' && sudo cat /etc/wireguard/wg0.conf"
