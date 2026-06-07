@@ -37,10 +37,26 @@ jobs:
             -backend-config="region=ap-southeast-1" \
             -backend-config="bucket=${SG_BUCKET}" -reconfigure
 
-          terraform destroy -input=false -auto-approve || true
+          terraform destroy -input=false -auto-approve
+          TF_EXIT=$?
+
+          cd ..
+
+          # If terraform destroy failed (e.g. state bucket already gone), kill instances directly
+          if [ $TF_EXIT -ne 0 ]; then
+            echo "Terraform destroy failed — terminating EC2 instances directly"
+            IDS=$(aws ec2 describe-instances --region ap-southeast-1 \
+              --filters "Name=tag:Name,Values=wireguard" "Name=instance-state-name,Values=running,pending,stopped" \
+              --query 'Reservations[].Instances[].InstanceId' --output text)
+            if [ -n "$IDS" ]; then
+              echo "Terminating: $IDS"
+              aws ec2 terminate-instances --region ap-southeast-1 --instance-ids $IDS
+            else
+              echo "No running instances found."
+            fi
+          fi
 
           echo "Cleaning up S3 bucket"
-          cd ..
           aws s3 rm s3://$SG_BUCKET --recursive || true
           aws s3 rb s3://$SG_BUCKET || true
 
