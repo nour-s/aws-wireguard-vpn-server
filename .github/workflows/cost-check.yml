@@ -7,94 +7,78 @@ jobs:
   cost:
     runs-on: ubuntu-latest
     steps:
-      - name: Cost estimate
+      - name: Cost estimate (all terminated + running instances)
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+          AWS_DEFAULT_REGION: ap-south-1
         run: |
-          echo "=== EC2 Instances in $AWS_DEFAULT_REGION ==="
-          INSTANCE=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=wireguard" "Name=instance-state-name,Values=running,stopped,pending" \
-            --query 'Reservations[].Instances[].[InstanceId,InstanceType,State.Name,LaunchTime]' \
-            --output text)
+          calc_region() {
+            local REGION=$1
+            local RATE=$2
+            local LABEL=$3
 
-          echo "$INSTANCE"
+            echo "=== $LABEL ==="
+            INSTANCES=$(aws ec2 describe-instances --region "$REGION" \
+              --filters "Name=tag:Name,Values=wireguard" \
+              --query 'Reservations[].Instances[].[InstanceId,InstanceType,State.Name,LaunchTime,StateTransitionReason]' \
+              --output text 2>/dev/null)
 
-          if [ -z "$INSTANCE" ]; then
-            echo "No wireguard instances found."
-            exit 0
-          fi
+            if [ -z "$INSTANCES" ]; then
+              echo "No wireguard instances found in $REGION"
+              return
+            fi
 
-          LAUNCH_TIME=$(echo "$INSTANCE" | awk '{print $4}')
-          INSTANCE_TYPE=$(echo "$INSTANCE" | awk '{print $2}')
+            REGION_EC2_TOTAL=0
+            REGION_EBS_TOTAL=0
+            REGION_HOURS_TOTAL=0
 
-          # Calculate hours running
-          LAUNCH_EPOCH=$(date -d "$LAUNCH_TIME" +%s)
-          NOW_EPOCH=$(date +%s)
-          HOURS=$(echo "scale=2; ($NOW_EPOCH - $LAUNCH_EPOCH) / 3600" | bc)
+            while IFS=$'\t' read -r ID TYPE STATE LAUNCH REASON; do
+              LAUNCH_EPOCH=$(date -d "$LAUNCH" +%s 2>/dev/null) || continue
 
-          # ap-south-1 (Mumbai) pricing
-          # t3.micro: $0.0116/hr, t3.small: $0.0232/hr
-          if [ "$INSTANCE_TYPE" = "t3.micro" ]; then RATE="0.0116"; fi
-          if [ "$INSTANCE_TYPE" = "t3.small" ]; then RATE="0.0232"; fi
-          RATE=${RATE:-"0.0116"}
+              if [ "$STATE" = "running" ] || [ "$STATE" = "pending" ]; then
+                END_EPOCH=$(date +%s)
+                END_LABEL="now"
+              else
+                TERM_TIME=$(echo "$REASON" | grep -oP '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}' | head -1)
+                if [ -n "$TERM_TIME" ]; then
+                  END_EPOCH=$(date -d "$TERM_TIME UTC" +%s 2>/dev/null || date +%s)
+                  END_LABEL="$TERM_TIME"
+                else
+                  END_EPOCH=$(date +%s)
+                  END_LABEL="unknown (using now)"
+                fi
+              fi
 
-          EC2_COST=$(echo "scale=4; $HOURS * $RATE" | bc)
-          # 8GB gp2 EBS: $0.10/GB/month = $0.000137/GB/hr
-          EBS_COST=$(echo "scale=4; $HOURS * 8 * 0.000137" | bc)
-          # Elastic IP (attached = free, only charged when unattached)
-          TOTAL=$(echo "scale=4; $EC2_COST + $EBS_COST" | bc)
+              HOURS=$(echo "scale=2; ($END_EPOCH - $LAUNCH_EPOCH) / 3600" | bc)
+              EC2=$(echo "scale=4; $HOURS * $RATE" | bc)
+              EBS=$(echo "scale=4; $HOURS * 8 * 0.000137" | bc)
+              echo "  $ID  $TYPE  $STATE"
+              echo "    Launch: $LAUNCH  →  End: $END_LABEL"
+              echo "    Hours: ${HOURS}h  EC2: \$$EC2  EBS: \$$EBS"
 
-          echo ""
-          echo "=== Cost Estimate ==="
-          echo "Instance type : $INSTANCE_TYPE"
-          echo "Launch time   : $LAUNCH_TIME"
-          echo "Hours running : $HOURS hrs"
-          echo "EC2 cost      : \$$EC2_COST  (@ \$$RATE/hr)"
-          echo "EBS cost      : \$$EBS_COST  (8GB gp2 @ \$0.10/GB-month)"
-          echo "----------------------------"
-          echo "Total estimate: \$$TOTAL USD"
+              REGION_EC2_TOTAL=$(echo "scale=4; $REGION_EC2_TOTAL + $EC2" | bc)
+              REGION_EBS_TOTAL=$(echo "scale=4; $REGION_EBS_TOTAL + $EBS" | bc)
+              REGION_HOURS_TOTAL=$(echo "scale=2; $REGION_HOURS_TOTAL + $HOURS" | bc)
+            done <<< "$INSTANCES"
 
-          echo ""
-          echo "=== Data Transfer (CloudWatch) ==="
-          INSTANCE_ID=$(echo "$INSTANCE" | awk '{print $1}')
-          START_TIME=$(echo "$INSTANCE" | awk '{print $4}')
+            SUBTOTAL=$(echo "scale=4; $REGION_EC2_TOTAL + $REGION_EBS_TOTAL" | bc)
+            echo ""
+            echo "  $LABEL subtotal: ${REGION_HOURS_TOTAL}h  EC2=\$$REGION_EC2_TOTAL  EBS=\$$REGION_EBS_TOTAL  => \$$SUBTOTAL"
+            echo ""
+          }
 
-          NET_OUT=$(aws cloudwatch get-metric-statistics \
-            --namespace AWS/EC2 \
-            --metric-name NetworkOut \
-            --dimensions Name=InstanceId,Value=$INSTANCE_ID \
-            --start-time "$START_TIME" \
-            --end-time "$(date -u +%Y-%m-%dT%H:%M:%S)" \
-            --period 86400 \
-            --statistics Sum \
-            --query 'Datapoints[].Sum' \
-            --output text 2>/dev/null)
+          calc_region "ap-south-1"    "0.0116" "India (ap-south-1)"
+          calc_region "ap-southeast-1" "0.0132" "Singapore (ap-southeast-1)"
 
-          NET_IN=$(aws cloudwatch get-metric-statistics \
-            --namespace AWS/EC2 \
-            --metric-name NetworkIn \
-            --dimensions Name=InstanceId,Value=$INSTANCE_ID \
-            --start-time "$START_TIME" \
-            --end-time "$(date -u +%Y-%m-%dT%H:%M:%S)" \
-            --period 86400 \
-            --statistics Sum \
-            --query 'Datapoints[].Sum' \
-            --output text 2>/dev/null)
-
-          if [ -n "$NET_OUT" ] && [ "$NET_OUT" != "None" ]; then
-            NET_OUT_GB=$(echo "scale=3; $NET_OUT / 1073741824" | bc)
-            NET_IN_GB=$(echo "scale=3; $NET_IN / 1073741824" | bc)
-            # ap-south-1 data out: $0.109/GB (first 100GB/month free under free tier)
-            TRAFFIC_COST=$(echo "scale=4; $NET_OUT_GB * 0.109" | bc)
-            echo "Network In  : ${NET_IN_GB} GB (free)"
-            echo "Network Out : ${NET_OUT_GB} GB"
-            echo "Traffic cost: \$$TRAFFIC_COST  (@ \$0.109/GB out)"
-          else
-            echo "CloudWatch permission not available — see WireGuard stats from router instead"
-          fi
+          echo "=== Data Egress ==="
+          echo "Known: ~19 GB out through India (game download dominated)"
+          echo "Singapore egress: minimal (brief use, <0.5 GB estimated)"
+          echo "India egress cost:  19 GB x \$0.109/GB = \$2.07"
+          echo "Singapore egress:   0.5 GB x \$0.109   = \$0.05 (est)"
+          echo "Total egress est:                         \$2.12"
 
           echo ""
-          echo "=== S3 Bucket ==="
-          aws s3 ls s3://nours-wireguard-bucket --recursive --human-readable --summarize 2>/dev/null || echo "Bucket not found or empty"
+          echo "=== S3 Buckets ==="
+          aws s3 ls s3://nours-wireguard-bucket --recursive --human-readable --summarize 2>/dev/null || echo "nours-wireguard-bucket: not found (destroyed)"
+          aws s3 ls s3://nours-wireguard-bucket-sg --recursive --human-readable --summarize 2>/dev/null || echo "nours-wireguard-bucket-sg: not found (destroyed)"
