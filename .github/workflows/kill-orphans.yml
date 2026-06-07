@@ -1,0 +1,36 @@
+name: Kill orphaned Singapore instances
+
+on:
+  workflow_dispatch:
+
+jobs:
+  kill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Terminate all wireguard instances in ap-southeast-1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-southeast-1
+        run: |
+          IDS=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=wireguard" "Name=instance-state-name,Values=running,pending,stopped" \
+            --query 'Reservations[].Instances[].InstanceId' \
+            --output text)
+
+          if [ -z "$IDS" ]; then
+            echo "No running wireguard instances found. Nothing to do."
+          else
+            echo "Terminating: $IDS"
+            aws ec2 terminate-instances --instance-ids $IDS
+            echo "Terminated."
+          fi
+
+          echo "=== Deleting leftover key pairs ==="
+          aws ec2 delete-key-pair --key-name wireguard 2>/dev/null && echo "Deleted key pair 'wireguard'" || echo "No key pair 'wireguard' found"
+
+          echo "=== Remaining instances ==="
+          aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=wireguard" \
+            --query 'Reservations[].Instances[].[InstanceId,State.Name]' \
+            --output text
