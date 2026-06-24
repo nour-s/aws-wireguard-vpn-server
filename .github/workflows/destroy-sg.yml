@@ -42,9 +42,10 @@ jobs:
 
           cd ..
 
-          # If terraform destroy failed (e.g. state bucket already gone), kill instances directly
           if [ $TF_EXIT -ne 0 ]; then
-            echo "Terraform destroy failed — terminating EC2 instances directly"
+            echo "Terraform destroy failed — cleaning up resources directly"
+
+            echo "Terminating EC2 instances"
             IDS=$(aws ec2 describe-instances --region ap-southeast-1 \
               --filters "Name=tag:Name,Values=wireguard" "Name=instance-state-name,Values=running,pending,stopped" \
               --query 'Reservations[].Instances[].InstanceId' --output text)
@@ -52,13 +53,37 @@ jobs:
               echo "Terminating: $IDS"
               aws ec2 terminate-instances --region ap-southeast-1 --instance-ids $IDS
             else
-              echo "No running instances found."
+              echo "No instances found."
             fi
+
+            echo "Releasing Elastic IPs"
+            ALLOC_IDS=$(aws ec2 describe-addresses --region ap-southeast-1 \
+              --filters "Name=tag:Name,Values=wireguard" \
+              --query 'Addresses[].AllocationId' --output text)
+            for ALLOC in $ALLOC_IDS; do
+              echo "Releasing $ALLOC"
+              aws ec2 release-address --region ap-southeast-1 --allocation-id $ALLOC
+            done
           fi
 
-          echo "Cleaning up S3 bucket"
+          echo "Verifying all resources are gone before deleting state"
+          REMAINING_INSTANCES=$(aws ec2 describe-instances --region ap-southeast-1 \
+            --filters "Name=tag:Name,Values=wireguard" "Name=instance-state-name,Values=running,pending,stopped" \
+            --query 'Reservations[].Instances[].InstanceId' --output text)
+          REMAINING_EIPS=$(aws ec2 describe-addresses --region ap-southeast-1 \
+            --filters "Name=tag:Name,Values=wireguard" \
+            --query 'Addresses[].AllocationId' --output text)
+
+          if [ -n "$REMAINING_INSTANCES" ] || [ -n "$REMAINING_EIPS" ]; then
+            echo "ERROR: Resources still exist — keeping S3 bucket to preserve Terraform state"
+            echo "Remaining instances: $REMAINING_INSTANCES"
+            echo "Remaining EIPs: $REMAINING_EIPS"
+            exit 1
+          fi
+
+          echo "All resources confirmed gone — deleting S3 bucket"
           aws s3 rm s3://$SG_BUCKET --recursive || true
           aws s3 rb s3://$SG_BUCKET || true
 
-          echo "Cleaning up any leftover key pair"
+          echo "Cleaning up key pair"
           aws ec2 delete-key-pair --key-name wireguard --region ap-southeast-1 || true
